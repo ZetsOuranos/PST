@@ -1,0 +1,916 @@
+from ipywidgets import interact, fixed
+import ipywidgets as widgets
+import matplotlib.pyplot as plt
+import numpy as np
+from numpy.random import rand
+
+# génère des abscisses
+x = np.arange(0,10,0.1)
+
+# from bqplot import pyplot as plt
+# # crée une figure y = f(x)
+# ma_figure = plt. figure(animation_duration = 300)
+# mon_tracé = plt.scatter(x, x**2, enable_move=True)
+# plt.xlabel('Axe des x')
+
+# initialise une zone d’affichage de texte
+Spouf= widgets.Output()
+print("Saisie des données :")
+print(" ")
+print("   - L   longueur de contact (en mm)")
+print("   - R1  rayon du corps 1 (en mm)")
+print("   - R2  rayon du corps 2 (en mm)")
+print("   - W   force normale (en N)")
+print("   - E1  module d'Young du corps 1 (en GPa)")
+print("   - E2  module d'Young du corps 2 (en GPa)")
+print("   - nu1 coefficient de Poisson du corps 1")
+print("   - nu2 coefficient de Poisson du corps 2")
+print(" ")
+print(" ")
+
+
+
+# choix de la fonction à tracer -> crée automatiquement un menu déroulant
+# modifie le tracé en fonction de la valeur du widget
+# il est possible d’utiliser interact via un décorateur
+# il est possible de fixer les variables ne devant pas faire l’objet d’un widget
+@interact(géométrie=['cylindre/cylindre','cylindre/plan', 'sphère/sphère', 'sphère/plan' ], x=fixed(x))
+def choix_fonction(géométrie, x):
+
+    if géométrie=='cylindre/cylindre':
+
+            from ipywidgets import interact
+            import ipywidgets as widgets
+
+            def f(L,R1,R2,W,E1,E2,nu1,nu2):
+
+                #Géométrie
+                L=L*10**(-3)        #longueur de contact (en m)
+                R1=R1*10**(-3)  #rayon du cylindre 1 (en m)
+                R2=R2*10**(-3)   #rayon du cylindre 2 (en m)
+                E1=E1*10**9    #module de Young du cylindre 1 (en Pa)
+                E2=E2*10**9    #module de Young du cylindre 2 (en Pa)
+
+
+                #Formules
+                Req=(1/R1+1/R2)**(-1)                       #rayon équivalent (en m)
+                W1=W/L                                      #force linéique (en N/m)
+                Er=(((1-nu1**2)/E1+(1-nu2**2)/E2)/2)**(-1)  #module d'Young réduit (en Pa)
+                a=np.sqrt(8*W1*Req/(np.pi*Er))              #contact demi-largeur (en mm)
+                Ph=np.sqrt(W1*Er/(2*np.pi*Req))             #PHertz pression maximale (en Pa)
+                z_crit=0.78*a                               #profondeur du maximum de contrainte (en m)
+                Tau_max=0.3*Ph                              #contrainte de Tresca (en Pa)
+                Delta1=(2*W1/np.pi)*(1-nu1**2)*(np.log(4*R1/a)-(1/2))*(1/E1)
+                Delta2=(2*W1/np.pi)*(1-nu2**2)*(np.log(4*R2/a)-(1/2))*(1/E2)
+                Delta=Delta1 + Delta2
+                
+                print(" ")
+                print(" ")
+                print("Résultats :")
+                print(" ")
+                print("   - Le","contact","demi-largeur","est","a","=",a*10**(3),"mm")
+                print("   - La","pression","de contact maximale","est","P","=",Ph*10**(-9),"GPa")
+                print("   - La","prondeur","du","maximum","de","contrainte","est","z","=",z_crit*10**(3),"mm")
+                print("   - La","contrainte","de","Tresca","maximale","est","Tau","=",Tau_max*10**(-6),"MPa")
+                #print("   - La déformation élastique de la pièce 1 une est =",Delta1*10**(-3), "mm")
+                #print("   - La déformation élastique de la pièce 2 une est =",Delta2*10**(-3), "mm")
+                print("   - La déformation élastique total est =",Delta*10**(-3), "mm")
+                print(" ")
+                print(" ")
+                print(" ")
+                print("Courbes :")
+                
+                nu=nu1  #coef de poisson
+
+                X=np.arange(0, 2.05, 0.05)     #X=x/a on pourra mettre un pas de 0.01 quand ca marchera
+                #x=a*X
+
+
+                #On construit Z=z/a
+                Z=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    Z[i]=X
+                #z=a*Z
+
+
+
+                #On construit M=m/a
+                M=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        M[i,j]=np.sqrt((1/2)*(np.sqrt(((1-X[i]*X[i]+Z[i,j]*Z[i,j])**2+4*X[i]*X[i]*Z[i,j]*Z[i,j]))+(1-X[i]*X[i]+Z[i,j]*Z[i,j])))
+
+
+
+                #On construit N=n/a
+                N=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        N[i,j]=np.sqrt((1/2)*(np.sqrt(((1-X[i]*X[i]+Z[i,j]*Z[i,j])**2+4*X[i]*X[i]*Z[i,j]*Z[i,j]))-(1-X[i]*X[i]+Z[i,j]*Z[i,j])))
+
+
+
+                #On construit SXX=SigmaXX/Ph
+                SXX=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                            if (M[i,j]**2+N[i,j]**2)==0 :
+                                SXX[i,j]=0
+                            else :
+                                SXX[i,j]=-(M[i,j]*(1+(Z[i,j]**2+N[i,j]**2)/(M[i,j]**2+N[i,j]**2))-2*Z[i,j])
+
+
+
+                #On construit SZZ=SigmaZZ/Ph
+                SZZ=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        if (M[i,j]**2+N[i,j]**2)==0 :
+                                SXX[i,j]=0
+                        else :
+                                SZZ[i,j]=-(M[i,j]*(1-(Z[i,j]**2+N[i,j]**2)/(M[i,j]**2+N[i,j]**2)))
+
+
+
+                #On construit TXZ=SigmaXZ/Ph=TauXZ
+
+                TXZ=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        if (M[i,j]**2+N[i,j]**2)==0 :
+                                SXX[i,j]=0
+                        else :
+                                TXZ[i,j]=-(N[i,j]*(-Z[i,j]**2+M[i,j]**2)/(M[i,j]**2+N[i,j]**2))
+
+
+
+                #On construit SYY=SigmaYY/Ph
+                SYY=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        SYY[i,j]=nu*(SXX[i,j]+SZZ[i,j]) #sens physique ?
+
+
+
+                #On construit S1=Sigma1/Ph
+                S1=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):                 #sens physique ?
+                    for j in range(len(Z)):
+                        S1[i,j]=((SXX[i,j]+SZZ[i,j])-np.sqrt(((SXX[i,j]+SZZ[i,j])**2+4*(TXZ[i,j]**2-SXX[i,j]*SZZ[i,j]))))/2
+
+
+
+
+
+                #On construit S2=Sigma2/Ph
+                S2=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):                 #sens physique ?
+                    for j in range(len(Z)):
+                        S2[i,j]=((SXX[i,j]+SZZ[i,j])+np.sqrt((SXX[i,j]+SZZ[i,j])**2+4*(TXZ[i,j]**2-SXX[i,j]*SZZ[i,j])))/2
+
+
+
+                #On construit ST=Contrainte de Tresca/Ph
+                ST=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        ST[i,j]=max(abs(S1[i,j]-S2[i,j]),abs(S1[i,j]-SYY[i,j]),abs(SYY[i,j]-S2[i,j]))
+
+
+
+                #On construit SVM=Contrainte de Von Mises/Ph
+                SVM=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        SVM[i,j]=np.sqrt(0.5*((S1[i,j]-S2[i,j])**2+(S1[i,j]-SYY[i,j])**2+(SYY[i,j]-S2[i,j])**2))
+
+
+
+                #On construit Phy=Phydro/Ph
+                Phy=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        Phy[i,j]=(SXX[i,j]+SYY[i,j]+SZZ[i,j])/3   #trace(Sigma)/3
+
+
+
+
+                n=0     #choix de x/a
+                x=X[n]  #(fonction qui en entrée x et renvoie n
+
+
+                plt.plot(SXX[n,:],-Z[n,:], color='blue')
+                plt.plot(SZZ[n,:],-Z[n,:], color='lightblue')
+                plt.plot(SYY[n,:],-Z[n,:], color='black')
+                plt.plot(ST[n,:],-Z[n,:], color='red')
+                plt.plot(SVM[n,:],-Z[n,:], color='orange')
+                plt.plot(Phy[n,:],-Z[n,:], color='green')
+                plt.grid(True)
+
+
+                plt.xlabel('Contrainte/PHertz ')
+                plt.ylabel('z/a')
+                plt.title('Titre')
+                plt.axis([-1.2,0.8,-2,0])
+
+
+                plt.figure()
+
+
+                plt.plot(Phy[n,:],ST[n,:], color='black')
+                
+                Phy3=Phy[0][0:len(Phy[0]):2]
+                ST3=ST[0][0:len(ST[0]):2]
+                plt.plot(Phy3[:],ST3[:],'ro', color='black')
+                
+                
+                plt.annotate('z/b=0', xy=(Phy3[0],ST3[0]-0.05), xytext=(Phy3[0],ST3[0]-0.05),
+                            )
+                plt.annotate('z/b=0.1', xy=(Phy3[1],ST3[1]-0.05), xytext=(Phy3[1],ST3[1]-0.05),
+                            )
+                plt.annotate('z/b=0.2', xy=(Phy3[2],ST3[2]-0.05), xytext=(Phy3[2],ST3[2]-0.05),
+                            )
+                plt.annotate('z/b=0.3', xy=(Phy3[3],ST3[3]-0.05), xytext=(Phy3[3],ST3[3]-0.05),
+                            )
+                plt.annotate('z/b=0.4', xy=(Phy3[4],ST3[4]+0.03), xytext=(Phy3[4],ST3[4]+0.03),
+                            )
+                plt.annotate('z/b=0.5', xy=(Phy3[5],ST3[5]-0.05), xytext=(Phy3[5],ST3[5]-0.05),
+                            )
+                
+                            
+                plt.annotate('z/b=0.8', xy=(Phy3[8],ST3[8]+0.03), xytext=(Phy3[8],ST3[9]+0.03),
+                            )
+                plt.annotate('z/b=1.1', xy=(Phy3[11],ST3[11]-0.05), xytext=(Phy3[11],ST3[11]-0.05),
+                            )
+                plt.annotate('z/b=1.4', xy=(Phy3[14],ST3[14]-0.05), xytext=(Phy3[14],ST3[14]-0.05)
+                            )
+                plt.annotate('z/b=1.7', xy=(Phy3[17],ST3[17]-0.05), xytext=(Phy3[17],ST3[17]-0.05),
+                            )
+                plt.annotate('z/b=2', xy=(Phy3[20],ST3[20]-0.05), xytext=(Phy3[20],ST3[20]-0.05),
+                            )
+
+                plt.xlabel('Pression hydrostatique / PHertz ')
+                plt.ylabel('Contrainte de Tresca / PHertz')
+                plt.title('Contrainte de Tresca adimensionnée en fonction de la pression hydrostatique adimensionnée')
+                plt.axis([-1,-0.1,0,0.7])
+                plt.show()
+
+            #interact(f, x=(min,max,pas));
+            interact(f, L=(0.0,10.0,0.1), R1=(0.0,50.0,0.1), R2=(0.0,50.0,0.1), W=(0,20000,100), E1=(0,500,1), E2=(0,500,1), nu1=(0,0.5,0.01), nu2=(0,0.5,0.01));
+
+    if géométrie=='cylindre/plan':
+
+            from ipywidgets import interact
+            import ipywidgets as widgets
+
+            def f(L,R,W,E1,E2,nu1,nu2):
+
+                #Géométrie
+                L=L*10**(-3)        #longueur de contact (en m)
+                R=R*10**(-3)  #diamètre du cylindre 1 (en m)
+                E1=E1*10**9    #module de Young du cylindre 1 (en Pa)
+                E2=E2*10**9    #module de Young du cylindre 2 (en Pa)
+
+                #Formules
+                Req=R                       #rayon équivalent (en m)
+                W1=W/L                                      #force linéique (en N/m)
+                Er=(((1-nu1**2)/E1+(1-nu2**2)/E2)/2)**(-1)  #module d'Young réduit (en Pa)
+                a=np.sqrt(8*W1*Req/(np.pi*Er))              #contact demi-largeur (en mm)
+                Ph=np.sqrt(W1*Er/(2*np.pi*Req))             #PHertz pression maximale (en Pa)
+                z_crit=0.78*a                                    #profondeur du maximum de contrainte (en m)
+                Tau_max=0.3*Ph                              #contrainte de Tresca (en Pa)
+                Delta=(2*W1/np.pi)*(1-nu1**2)*(np.log(4*R/a)-(1/2))*(1/E1)
+                
+                print(" ")
+                print(" ")
+                print("Résultats :")
+                print(" ")
+                print("   - Le","contact","demi-largeur","est","a","=",a*10**(3),"mm")
+                print("   - La","pression","de contact maximale","est","P","=",Ph*10**(-9),"GPa")
+                print("   - La","prondeur","du","maximum","de","contrainte","est","z","=",z_crit*10**(3),"mm")
+                print("   - La","contrainte","de","Tresca","maximale","est","Tau","=",Tau_max*10**(-6),"MPa")
+                print("   - La déformation élastique total est =",Delta*10**(-3), "mm")
+                print(" ")
+                print(" ")
+                print(" ")
+                print("Courbes")
+
+                nu=nu1  #coef de poisson
+
+                X=np.arange(0, 2.05, 0.05)     #X=x/a on pourra mettre un pas de 0.01 quand ca marchera
+                #x=a*X
+
+
+                #On construit Z=z/a
+                Z=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    Z[i]=X
+                #z=a*Z
+
+
+                #On construit M=m/a
+                M=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        M[i,j]=np.sqrt((1/2)*(np.sqrt(((1-X[i]*X[i]+Z[i,j]*Z[i,j])**2+4*X[i]*X[i]*Z[i,j]*Z[i,j]))+(1-X[i]*X[i]+Z[i,j]*Z[i,j])))
+
+
+
+                #On construit N=n/a
+                N=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        N[i,j]=np.sqrt((1/2)*(np.sqrt(((1-X[i]*X[i]+Z[i,j]*Z[i,j])**2+4*X[i]*X[i]*Z[i,j]*Z[i,j]))-(1-X[i]*X[i]+Z[i,j]*Z[i,j])))
+
+
+
+                #On construit SXX=SigmaXX/Ph
+                SXX=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                            if (M[i,j]**2+N[i,j]**2)==0 :
+                                SXX[i,j]=0
+                            else :
+                                SXX[i,j]=-(M[i,j]*(1+(Z[i,j]**2+N[i,j]**2)/(M[i,j]**2+N[i,j]**2))-2*Z[i,j])
+
+
+
+                #On construit SZZ=SigmaZZ/Ph
+                SZZ=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        if (M[i,j]**2+N[i,j]**2)==0 :
+                                SXX[i,j]=0
+                        else :
+                                SZZ[i,j]=-(M[i,j]*(1-(Z[i,j]**2+N[i,j]**2)/(M[i,j]**2+N[i,j]**2)))
+
+
+
+                #On construit TXZ=SigmaXZ/Ph=TauXZ
+
+                TXZ=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        if (M[i,j]**2+N[i,j]**2)==0 :
+                                SXX[i,j]=0
+                        else :
+                                TXZ[i,j]=-(N[i,j]*(-Z[i,j]**2+M[i,j]**2)/(M[i,j]**2+N[i,j]**2))
+
+
+
+                #On construit SYY=SigmaYY/Ph
+                SYY=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        SYY[i,j]=nu*(SXX[i,j]+SZZ[i,j])
+
+
+
+                #On construit S1=Sigma1/Ph
+                S1=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):                 #sens physique ?
+                    for j in range(len(Z)):
+                        S1[i,j]=((SXX[i,j]+SZZ[i,j])-np.sqrt(((SXX[i,j]+SZZ[i,j])**2+4*(TXZ[i,j]**2-SXX[i,j]*SZZ[i,j]))))/2
+
+
+
+
+
+                #On construit S2=Sigma2/Ph
+                S2=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):                 #sens physique ?
+                    for j in range(len(Z)):
+                        S2[i,j]=((SXX[i,j]+SZZ[i,j])+np.sqrt((SXX[i,j]+SZZ[i,j])**2+4*(TXZ[i,j]**2-SXX[i,j]*SZZ[i,j])))/2
+
+
+
+                #On construit ST=Contrainte de Tresca/Ph
+                ST=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        ST[i,j]=max(abs(S1[i,j]-S2[i,j]),abs(S1[i,j]-SYY[i,j]),abs(SYY[i,j]-S2[i,j]))
+
+
+
+                #On construit SVM=Contrainte de Von Mises/Ph
+                SVM=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        SVM[i,j]=np.sqrt(0.5*((S1[i,j]-S2[i,j])**2+(S1[i,j]-SYY[i,j])**2+(SYY[i,j]-S2[i,j])**2))
+
+
+
+                #On construit Phy=Phydro/Ph
+                Phy=np.zeros((len(X),len(X)))
+                for i in range(len(Z)):
+                    for j in range(len(Z)):
+                        Phy[i,j]=(SXX[i,j]+SYY[i,j]+SZZ[i,j])/3   #trace(Sigma)/3
+
+
+                n=0     #choix de x/a
+                x=X[n]  #(fonction qui en entrée x et renvoie n
+
+
+                plt.plot(SXX[n,:],-Z[n,:], color='blue')
+                plt.plot(SZZ[n,:],-Z[n,:], color='lightblue')
+                plt.plot(SYY[n,:],-Z[n,:], color='black')
+                plt.plot(ST[n,:],-Z[n,:], color='red')
+                plt.plot(SVM[n,:],-Z[n,:], color='orange')
+                plt.plot(Phy[n,:],-Z[n,:], color='green')
+                plt.grid(True)
+
+
+                plt.xlabel('Contrainte/PHertz ')
+                plt.ylabel('z/a')
+                plt.title('Titre')
+                plt.axis([-1.2,0.8,-2,0])
+
+
+                plt.figure()
+
+
+                plt.plot(Phy[n,:],ST[n,:], color='black')
+                
+                Phy3=Phy[0][0:len(Phy[0]):2]
+                ST3=ST[0][0:len(ST[0]):2]
+                plt.plot(Phy3[:],ST3[:],'ro', color='black')
+                
+                plt.annotate('z/b=0', xy=(Phy3[0],ST3[0]-0.05), xytext=(Phy3[0],ST3[0]-0.05),
+                            )
+                plt.annotate('z/b=0.1', xy=(Phy3[1],ST3[1]-0.05), xytext=(Phy3[1],ST3[1]-0.05),
+                            )
+                plt.annotate('z/b=0.2', xy=(Phy3[2],ST3[2]-0.05), xytext=(Phy3[2],ST3[2]-0.05),
+                            )
+                plt.annotate('z/b=0.3', xy=(Phy3[3],ST3[3]-0.05), xytext=(Phy3[3],ST3[3]-0.05),
+                            )
+                plt.annotate('z/b=0.4', xy=(Phy3[4],ST3[4]+0.03), xytext=(Phy3[4],ST3[4]+0.03),
+                            )
+                plt.annotate('z/b=0.5', xy=(Phy3[5],ST3[5]-0.05), xytext=(Phy3[5],ST3[5]-0.05),
+                            )
+                
+                            
+                plt.annotate('z/b=0.8', xy=(Phy3[8],ST3[8]+0.03), xytext=(Phy3[8],ST3[9]+0.03),
+                            )
+                plt.annotate('z/b=1.1', xy=(Phy3[11],ST3[11]-0.05), xytext=(Phy3[11],ST3[11]-0.05),
+                            )
+                plt.annotate('z/b=1.4', xy=(Phy3[14],ST3[14]-0.05), xytext=(Phy3[14],ST3[14]-0.05)
+                            )
+                plt.annotate('z/b=1.7', xy=(Phy3[17],ST3[17]-0.05), xytext=(Phy3[17],ST3[17]-0.05),
+                            )
+                plt.annotate('z/b=2', xy=(Phy3[20],ST3[20]-0.05), xytext=(Phy3[20],ST3[20]-0.05),
+                            )
+
+
+
+                plt.xlabel('Pression hydrostatique / PHertz ')
+                plt.ylabel('Contrainte de Tresca / PHertz')
+                plt.title('Contrainte de Tresca adimensionnée en fonction de la pression hydrostatique adimensionnée')
+                plt.axis([-1,-0.1,0,0.7])
+                plt.show()
+
+            interact(f, L=(0.0,10.0,0.1), R=(0.0,50.0,0.1), W=(0,20000,100), E1=(0,500,1), E2=(0,500,1), nu1=(0,0.5,0.01), nu2=(0,0.5,0.01));
+
+    if géométrie=='sphère/sphère':
+
+            from ipywidgets import interact
+            import ipywidgets as widgets
+
+            def f(R1,R2,W,E1,E2,nu1,nu2):
+
+                #Conversion      on passe E1 et E2 en MPa
+                E1=E1*10**(3)
+                E2=E2*10**(3)
+                
+                #Formules
+                Req=(1/R1+1/R2)**(-1)                       #rayon équivalent (en mm)
+                Er=((1-nu1**2)/E1+(1-nu2**2)/E2)**(-1)      #module d'Young réduit (en MPa)
+                a=((3*W*Req)/(4*Er))**(1/3)                 #contact demi-largeur (en mm)
+                Ph=((6*W*Er**2)/((Req**2)*(np.pi**3)))**(1/3)                  #PHertz pression maximale (en Pa)
+                z_crit=0.48*a                               #profondeur du maximum de contrainte (en m)
+                Tau_max=0.31*Ph                             #contrainte de Tresca (en Pa)
+                Delta=((9*W**2)/(16*Req*Er**2))**(1/3)      #déflection élastique (en mm)
+
+                print(" ")
+                print(" ")
+                print("Résultats :")
+                print(" ")
+                print("   - Le contact demi-largeur est a =",a,"mm")
+                print("   - La pression de contact maximale est P","=",Ph,"MPa")
+                print("   - La prondeur du maximum de contrainte est z =",z_crit,"mm")
+                print("   - La contrainte de Tresca maximale est Tau =",Tau_max,"MPa")
+                print("   - La Déformation élastique e est Delta =",Delta,"mm")
+                print(" ")
+                print(" ")
+                print(" ")
+                print("Courbes :")
+
+                #tips fonction input
+                #fonction if pour voir si on est dans les hypothèses de Hertz
+
+
+                nu=nu1  #coef de poisson
+
+                #On construit X=x/a
+                X=np.arange(-1.2, 1.21, 0.01)
+                #x=a*X
+
+                #On construit Y=y/a
+                Y=np.arange(-1.2, 1.21, 0.01)
+                #y=a*Y
+
+                #On construit Z=z/a
+                Z=np.arange(0.01 , 1.21, 0.01)
+                #z=a*Z
+
+                #On construit les tableaux des différentes contraintes projetées sur y
+                #On construit SXXy=SigmaXX/Ph projeté sur y
+                SXXy=np.zeros(len(Y))
+                for i in range(len(SXXy)) :
+                    if  abs(Y[i])<10**(-12) :
+                            SXXy[i]=(1/2)*(-((1-2*nu)/3)*(1/Y[i-1]**2)*(1-(1-Y[i-1]**2)**(3/2))-2*nu*abs((1-Y[i-1]**2)**(1/2))+(-((1-2*nu)/3)*(1/Y[i+1]**2)*(1-(1-Y[i+1]**2)**(3/2))-2*nu*abs((1-Y[i+1]**2)**(1/2))))
+
+                    elif abs(Y[i])>=1:
+                            SXXy[i]=-((1-2*nu)/3)*(1/Y[i]**2)
+                    else:
+                        SXXy[i]=-((1-2*nu)/3)*(1/Y[i]**2)*(1-(1-Y[i]**2)**(3/2))-2*nu*abs((1-Y[i]**2)**(1/2))
+
+
+                #On construit SYYy=SigmaYY/Ph projeté  sur y
+                SYYy=np.zeros(len(Y))
+                for i in range(len(SYYy)) :
+                    if  abs(Y[i])<10**(-12) :
+                            SYYy[i]=(1/2)*(((1-2*nu)/3)*(1/Y[i-1]**2)*(1-(1-Y[i-1]**2)**(3/2))-abs((1-Y[i-1]**2)**(1/2))+((1-2*nu)/3)*(1/Y[i+1]**2)*(1-(1-Y[i+1]**2)**(3/2))-abs((1-Y[i+1]**2)**(1/2)))
+
+                    elif abs(Y[i])>=1:
+                            SYYy[i]=((1-2*nu)/3)*(1/Y[i]**2)
+                    else :
+                        SYYy[i]=((1-2*nu)/3)*(1/Y[i]**2)*(1-(1-Y[i]**2)**(3/2))-abs((1-Y[i]**2)**(1/2))
+                        SYYy[120]=(SYYy[119]+ SYYy[121])/2
+
+                #On construit SZZy=SigmaZZ/Ph projeté sur y
+                SZZy=np.zeros(len(Y))
+                for i in range(len(SZZy)) :
+                    if abs(Y[i])>=1 :
+                        SZZy[i]=0
+                    else :
+                        SZZy[i]=-(1-Y[i]**2)**(1/2)
+
+                #On construit  SVMy=Contrainte de Von Mises/Ph projeté sur y
+                SVMy=np.zeros(len(Y))
+                for i in range(len(SVMy)) :
+                    SVMy[i]=np.sqrt((1/2)*((SXXy[i]-SYYy[i])**2+(SYYy[i]-SZZy[i])**2+(SXXy[i]-SZZy[i])**2))
+
+
+
+                #On construit les tableaux des différentes contraintes projetées sur z
+                #On construit SYY=SigmaYY/Ph projeté sur z
+                SYYz=np.zeros(len(Z))
+                for i in range(len(SYYz)) :
+                        SYYz[i]=-(1+nu)*(1-Z[i]*np.arctan(1/Z[i]))+(1/2)*(1+Z[i]**2)**(-1)
+
+                #On construit SXXz=SigmaXX/Ph  projeté sur z
+                SXXz=SYYz
+
+                #On construit SZZz=SigmaZZ/Ph  projeté sur z
+                SZZz=np.zeros(len(Z))
+                for i in range(len(SZZz)) :
+                    SZZz[i]=-(1+Z[i]**2)**(-1)
+
+                #On construit  SVMz=Contrainte de Von Mises/Ph projeté sur z
+                SVMz=np.zeros(len(Z))
+                for i in range(len(SVMz)) :
+                    SVMz[i]=np.sqrt((1/2)*((SXXz[i]-SYYz[i])**2+(SYYz[i]-SZZz[i])**2+(SXXz[i]-SZZz[i])**2))
+
+                #On construit, SXY, SXZ, SYZ qui sont nulles dans toutes les directions !!!
+                SXY=np.zeros(len(Y))
+                SXZ=SXY
+                SYZ=SXY
+
+                #On construit ST=Contrainte de Tresca/Ph  projeté sur z
+                ST=np.zeros(len(Z))
+                for k in range(len(Z)):
+                    ST[k]=max(abs(SXXz[k]-SYYz[k]),abs(SXXz[k]-SZZz[k]),abs(SYYz[k]-SZZz[k]))
+
+                #On construit Phy=Phydro/Ph
+                Phy=np.zeros(len(Z))
+                for k in range(len(Z)):
+                    Phy[k]=(SXXz[k]+SYYz[k]+SZZz[k])/3
+
+
+
+                #On trace les contraintes projetées sur y
+                plt.plot(Y,SXXy, color='blue')
+                plt.plot(Y,SYYy, color='pink')
+                plt.plot(Y,SZZy, color='yellow')
+                plt.plot(Y,SVMy, color='green')
+                plt.grid(True)
+
+                plt.xlabel('y/a')
+                plt.ylabel('Contrainte/PHertz')
+                plt.title('Titre')
+                plt.axis([-1.2,1.2,-1,0.5])
+
+                plt.figure()
+
+                #On trace les contraintes projetées sur z
+                plt.plot(Z,SXXz, color='pink')
+                plt.plot(Z,SYYz, color='blue')
+                plt.plot(Z,SZZz, color='yellow')
+                plt.plot(Z,SVMz, color='orange')
+                plt.plot(Z,ST, color='red')
+                plt.plot(Z,Phy, color='green')
+                plt.grid(True)
+                plt.annotate('les courbes ST et SVM sont confondues', xy=(Z[int(len(Z)/2)]/2,ST[int(len(Z)/2)]), xytext=(Z[int(len(Z)/2)],ST[int(len(Z)/2)]),
+                            )
+                plt.annotate('les courbes SXXz et SSYz sont confondues', xy=(Z[-1]/2,SXXz[-1]), xytext=(Z[-1]/2,SXXz[-1]),
+                            )
+
+                plt.xlabel('z/a')
+                plt.ylabel('Contrainte/PHertz')
+                plt.title('Titre')
+                plt.axis([0,1.2,-1,0.75])
+
+                plt.figure()
+
+
+                plt.plot(Phy,ST, color='black')
+        
+                Phy2=Phy[9:len(Phy):10]
+                Phy3=np.zeros(len(Phy2)+1)
+                for k in range(len(Phy3)):
+                    if k==0:
+                        Phy3[k]=Phy[0]
+                    else:
+                        Phy3[k]=Phy2[k-1]
+
+                ST2=ST[9:len(ST):10]
+                ST3=np.zeros(len(ST2)+1)
+                for k in range(len(ST3)):
+                    if k==0:
+                        ST3[k]=ST[0]
+                    else:
+                        ST3[k]=ST2[k-1]
+                plt.plot(Phy3,ST3,'ro', color='black')
+                
+                plt.plot(Phy3,ST3,'ro', color='black')
+                
+                plt.annotate('z/b=0', xy=(Phy3[0],ST3[0]-0.05), xytext=(Phy3[0],ST3[0]-0.05),
+                            )
+                plt.annotate('z/b=0.1', xy=(Phy3[1],ST3[1]-0.05), xytext=(Phy3[1],ST3[1]-0.05),
+                            )
+                plt.annotate('z/b=0.2', xy=(Phy3[2],ST3[2]-0.05), xytext=(Phy3[2],ST3[2]-0.05),
+                            )
+                plt.annotate('z/b=0.3', xy=(Phy3[3],ST3[3]-0.05), xytext=(Phy3[3],ST3[3]-0.05),
+                            )
+                plt.annotate('z/b=0.4', xy=(Phy3[4],ST3[4]-0.05), xytext=(Phy3[4],ST3[4]-0.05),
+                            )
+                plt.annotate('z/b=0.5', xy=(Phy3[5],ST3[5]-0.05), xytext=(Phy3[5],ST3[5]-0.05),
+                            )
+                plt.annotate('z/b=0.6', xy=(Phy3[6],ST3[6]-0.05), xytext=(Phy3[6],ST3[6]-0.05),
+                            )
+                plt.annotate('z/b=0.7', xy=(Phy3[7],ST3[7]-0.05), xytext=(Phy3[7],ST3[7]-0.05),
+                            )
+                plt.annotate('z/b=0.8', xy=(Phy3[8],ST3[8]-0.05), xytext=(Phy3[8],ST3[8]-0.05),
+                            )
+                plt.annotate('z/b=0.9', xy=(Phy3[9],ST3[9]-0.05), xytext=(Phy3[9],ST3[9]-0.05),
+                            )
+                plt.annotate('z/b=1', xy=(Phy3[10],ST3[10]-0.05), xytext=(Phy3[10],ST3[10]-0.05),
+                            )
+                plt.annotate('z/b=1.1', xy=(Phy3[11],ST3[11]-0.05), xytext=(Phy3[11],ST3[11]-0.05),
+                            )
+                plt.annotate('z/b=1.2', xy=(Phy3[12],ST3[12]-0.05), xytext=(Phy3[12],ST3[12]-0.05),
+                            )
+                
+
+                plt.xlabel('Pression hydrostatique / PHertz ')
+                plt.ylabel('Contrainte de Tresca / PHertz')
+                plt.title('Contrainte de Tresca adimensionnée en fonction de la pression hydrostatique adimensionnée')
+                plt.axis([-1,-0.1,0,0.7])
+                plt.show()
+
+                plt.show()
+            interact(f, R1=(0.0,50.0,0.1), R2=(0.0,50.0,0.1), W=(0,20000,100), E1=(0,500,1), E2=(0,500,1), nu1=(0,0.5,0.01), nu2=(0,0.5,0.01));
+
+
+    if géométrie=='sphère/plan':
+
+            from ipywidgets import interact
+            import ipywidgets as widgets
+
+            def f(R,W,E1,E2,nu1,nu2):
+                
+                 #Conversion      on passe E1 et E2 en MPa
+                E1=E1*10**(3)
+                E2=E2*10**(3)
+
+                #Formules
+                Req=R                      #rayon équivalent (en mm)
+                Er=((1-nu1**2)/E1+(1-nu2**2)/E2)**(-1)      #module d'Young réduit (en MPa)
+                a=((3*W*Req)/(4*Er))**(1/3)                 #contact demi-largeur (en mm)
+                Ph=((6*W*Er**2)/((Req**2)*(np.pi**3)))**(1/3)                  #PHertz pression maximale (en Pa)
+                z_crit=0.48*a                               #profondeur du maximum de contrainte (en m)
+                Tau_max=0.31*Ph                             #contrainte de Tresca (en Pa)
+                Delta=((9*W**2)/(16*Req*Er**2))**(1/3)      #déflection élastique (en mm)
+
+                print(" ")
+                print(" ")
+                print(" ")
+                print("Résultats :")
+                print(" ")
+                print("   - Le contact demi-largeur est a =",a,"mm")
+                print("   - La pression de contact maximale est P","=",Ph,"MPa")
+                print("   - La prondeur du maximum de contrainte est z =",z_crit,"mm")
+                print("   - La contrainte de Tresca maximale est Tau =",Tau_max,"MPa")
+                print("   - La Déformation élastique e est Delta =",Delta,"mm")
+                print(" ")
+                print(" ")
+                print(" ")
+                print("Courbes :")
+
+                #tips fonction input
+                #fonction if pour voir si on est dans les hypothèses de Hertz
+
+
+                nu=nu1  #coef de poisson
+
+                #On construit X=x/a
+                X=np.arange(-1.2, 1.21, 0.01)
+                #x=a*X
+
+                #On construit Y=y/a
+                Y=np.arange(-1.2, 1.21, 0.01)
+                #y=a*Y
+
+                #On construit Z=z/a
+                Z=np.arange(0.01 , 1.21, 0.01)
+                #z=a*Z
+
+                #On construit les tableaux des différentes contraintes projetées sur y
+                #On construit SXXy=SigmaXX/Ph projeté sur y
+                SXXy=np.zeros(len(Y))
+                for i in range(len(SXXy)) :
+                    if  abs(Y[i])<10**(-12) :
+                            SXXy[i]=(1/2)*(-((1-2*nu)/3)*(1/Y[i-1]**2)*(1-(1-Y[i-1]**2)**(3/2))-2*nu*abs((1-Y[i-1]**2)**(1/2))+(-((1-2*nu)/3)*(1/Y[i+1]**2)*(1-(1-Y[i+1]**2)**(3/2))-2*nu*abs((1-Y[i+1]**2)**(1/2))))
+
+                    elif abs(Y[i])>=1:
+                            SXXy[i]=-((1-2*nu)/3)*(1/Y[i]**2)
+                    else:
+                        SXXy[i]=-((1-2*nu)/3)*(1/Y[i]**2)*(1-(1-Y[i]**2)**(3/2))-2*nu*abs((1-Y[i]**2)**(1/2))
+
+
+                #On construit SYYy=SigmaYY/Ph projeté  sur y
+                SYYy=np.zeros(len(Y))
+                for i in range(len(SYYy)) :
+                    if  abs(Y[i])<10**(-12) :
+                            SYYy[i]=(1/2)*(((1-2*nu)/3)*(1/Y[i-1]**2)*(1-(1-Y[i-1]**2)**(3/2))-abs((1-Y[i-1]**2)**(1/2))+((1-2*nu)/3)*(1/Y[i+1]**2)*(1-(1-Y[i+1]**2)**(3/2))-abs((1-Y[i+1]**2)**(1/2)))
+
+                    elif abs(Y[i])>=1:
+                            SYYy[i]=((1-2*nu)/3)*(1/Y[i]**2)
+                    else :
+                        SYYy[i]=((1-2*nu)/3)*(1/Y[i]**2)*(1-(1-Y[i]**2)**(3/2))-abs((1-Y[i]**2)**(1/2))
+                        SYYy[120]=(SYYy[119]+ SYYy[121])/2
+
+                #On construit SZZy=SigmaZZ/Ph projeté sur y
+                SZZy=np.zeros(len(Y))
+                for i in range(len(SZZy)) :
+                    if abs(Y[i])>=1 :
+                        SZZy[i]=0
+                    else :
+                        SZZy[i]=-(1-Y[i]**2)**(1/2)
+
+                #On construit  SVMy=Contrainte de Von Mises/Ph projeté sur y
+                SVMy=np.zeros(len(Y))
+                for i in range(len(SVMy)) :
+                    SVMy[i]=np.sqrt((1/2)*((SXXy[i]-SYYy[i])**2+(SYYy[i]-SZZy[i])**2+(SXXy[i]-SZZy[i])**2))
+
+
+
+                #On construit les tableaux des différentes contraintes projetées sur z
+                #On construit SYY=SigmaYY/Ph projeté sur z
+                SYYz=np.zeros(len(Z))
+                for i in range(len(SYYz)) :
+                        SYYz[i]=-(1+nu)*(1-Z[i]*np.arctan(1/Z[i]))+(1/2)*(1+Z[i]**2)**(-1)
+
+                #On construit SXXz=SigmaXX/Ph  projeté sur z
+                SXXz=SYYz
+
+                #On construit SZZz=SigmaZZ/Ph  projeté sur z
+                SZZz=np.zeros(len(Z))
+                for i in range(len(SZZz)) :
+                    SZZz[i]=-(1+Z[i]**2)**(-1)
+
+                #On construit  SVMz=Contrainte de Von Mises/Ph projeté sur z
+                SVMz=np.zeros(len(Z))
+                for i in range(len(SVMz)) :
+                    SVMz[i]=np.sqrt((1/2)*((SXXz[i]-SYYz[i])**2+(SYYz[i]-SZZz[i])**2+(SXXz[i]-SZZz[i])**2))
+
+                #On construit, SXY, SXZ, SYZ qui sont nulles dans toutes les directions !!!
+                SXY=np.zeros(len(Y))
+                SXZ=SXY
+                SYZ=SXY
+
+                #On construit ST=Contrainte de Tresca/Ph  projeté sur z
+                ST=np.zeros(len(Z))
+                for k in range(len(Z)):
+                    ST[k]=max(abs(SXXz[k]-SYYz[k]),abs(SXXz[k]-SZZz[k]),abs(SYYz[k]-SZZz[k]))
+
+                #On construit Phy=Phydro/Ph
+                Phy=np.zeros(len(Z))
+                for k in range(len(Z)):
+                    Phy[k]=(SXXz[k]+SYYz[k]+SZZz[k])/3
+
+
+
+                #On trace les contraintes projetées sur y
+                plt.plot(Y,SXXy, color='blue')
+                plt.plot(Y,SYYy, color='pink')
+                plt.plot(Y,SZZy, color='yellow')
+                plt.plot(Y,SVMy, color='green')
+                plt.grid(True)
+
+                plt.xlabel('y/a')
+                plt.ylabel('Contrainte/PHertz')
+                plt.title('Titre')
+                plt.axis([-1.2,1.2,-1,0.5])
+
+                plt.figure()
+
+                #On trace les contraintes projetées sur z
+                plt.plot(Z,SXXz, color='pink')
+                plt.plot(Z,SYYz, color='blue')
+                plt.plot(Z,SZZz, color='yellow')
+                plt.plot(Z,SVMz, color='orange')
+                plt.plot(Z,ST, color='red')
+                plt.plot(Z,Phy, color='green')
+                plt.grid(True)
+                plt.annotate('les courbes ST et SVM sont confondues', xy=(Z[int(len(Z)/2)]/2,ST[int(len(Z)/2)]), xytext=(Z[int(len(Z)/2)],ST[int(len(Z)/2)]),
+                            )
+                plt.annotate('les courbes SXXz et SSYz sont confondues', xy=(Z[-1]/2,SXXz[-1]), xytext=(Z[-1]/2,SXXz[-1]),
+                            )
+
+                plt.xlabel('z/a')
+                plt.ylabel('Contrainte/PHertz')
+                plt.title('Titre')
+                plt.axis([0,1.2,-1,0.75])
+
+                plt.figure()
+
+
+                plt.plot(Phy,ST, color='black')
+                
+                Phy2=Phy[9:len(Phy):10]
+                Phy3=np.zeros(len(Phy2)+1)
+                for k in range(len(Phy3)):
+                    if k==0:
+                        Phy3[k]=Phy[0]
+                    else:
+                        Phy3[k]=Phy2[k-1]
+                        
+
+                ST2=ST[9:len(ST):10]
+                ST3=np.zeros(len(ST2)+1)
+                for k in range(len(ST3)):
+                    if k==0:
+                        ST3[k]=ST[0]
+                    else:
+                        ST3[k]=ST2[k-1]
+                plt.plot(Phy3,ST3,'ro', color='black')
+                
+                plt.annotate('z/b=0', xy=(Phy3[0],ST3[0]-0.05), xytext=(Phy3[0],ST3[0]-0.05),
+                            )
+                plt.annotate('z/b=0.1', xy=(Phy3[1],ST3[1]-0.05), xytext=(Phy3[1],ST3[1]-0.05),
+                            )
+                plt.annotate('z/b=0.2', xy=(Phy3[2],ST3[2]-0.05), xytext=(Phy3[2],ST3[2]-0.05),
+                            )
+                plt.annotate('z/b=0.3', xy=(Phy3[3],ST3[3]-0.05), xytext=(Phy3[3],ST3[3]-0.05),
+                            )
+                plt.annotate('z/b=0.4', xy=(Phy3[4],ST3[4]-0.05), xytext=(Phy3[4],ST3[4]-0.05),
+                            )
+                plt.annotate('z/b=0.5', xy=(Phy3[5],ST3[5]-0.05), xytext=(Phy3[5],ST3[5]-0.05),
+                            )
+                plt.annotate('z/b=0.6', xy=(Phy3[6],ST3[6]-0.05), xytext=(Phy3[6],ST3[6]-0.05),
+                            )
+                plt.annotate('z/b=0.7', xy=(Phy3[7],ST3[7]-0.05), xytext=(Phy3[7],ST3[7]-0.05),
+                            )
+                plt.annotate('z/b=0.8', xy=(Phy3[8],ST3[8]-0.05), xytext=(Phy3[8],ST3[8]-0.05),
+                            )
+                plt.annotate('z/b=0.9', xy=(Phy3[9],ST3[9]-0.05), xytext=(Phy3[9],ST3[9]-0.05),
+                            )
+                plt.annotate('z/b=1', xy=(Phy3[10],ST3[10]-0.05), xytext=(Phy3[10],ST3[10]-0.05),
+                            )
+                plt.annotate('z/b=1.1', xy=(Phy3[11],ST3[11]-0.05), xytext=(Phy3[11],ST3[11]-0.05),
+                            )
+                plt.annotate('z/b=1.2', xy=(Phy3[12],ST3[12]-0.05), xytext=(Phy3[12],ST3[12]-0.05),
+                            )
+                
+
+
+                plt.xlabel('Pression hydrostatique / PHertz ')
+                plt.ylabel('Contrainte de Tresca / PHertz')
+                plt.title('Contrainte de Tresca adimensionnée en fonction de la pression hydrostatique adimensionnée')
+                plt.axis([-1,-0.1,0,0.7])
+                plt.show()
+
+                plt.show()
+            interact(f, R=(0.0,50.0,0.1), W=(0,20000,100), E1=(0,500,1), E2=(0,500,1), nu1=(0,0.5,0.01), nu2=(0,0.5,0.01));
+
