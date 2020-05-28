@@ -70,15 +70,16 @@ def choix_fonction(géométrie, x):
                 print(" ")
                 print("   - Le","contact","demi-largeur","est","a","=",a*10**(3),"mm")
                 print("   - La","pression","de contact maximale","est","P","=",Ph*10**(-9),"GPa")
-                print("   - La","prondeur","du","maximum","de","contrainte","est","z","=",z_crit*10**(3),"mm")
+                print("   - La","prondeur","du","maximum","de","contrainte","est","z_crit","=",z_crit*10**(3),"mm")
                 print("   - La","contrainte","de","Tresca","maximale","est","Tau","=",Tau_max*10**(-6),"MPa")
                 #print("   - La déformation élastique de la pièce 1 une est =",Delta1*10**(-3), "mm")
                 #print("   - La déformation élastique de la pièce 2 une est =",Delta2*10**(-3), "mm")
-                print("   - La déformation élastique total est =",Delta*10**(-3), "mm")
+                print("   - La déformation élastique total est Delta=",Delta*10**(3), "mm")
                 print(" ")
                 print(" ")
                 print(" ")
                 print("Courbes :")
+            
                 
                 nu=nu1  #coef de poisson
 
@@ -198,19 +199,19 @@ def choix_fonction(géométrie, x):
                 n=0     #choix de x/a
                 x=X[n]  #(fonction qui en entrée x et renvoie n
 
-
-                plt.plot(SXX[n,:],-Z[n,:], color='blue')
-                plt.plot(SZZ[n,:],-Z[n,:], color='lightblue')
-                plt.plot(SYY[n,:],-Z[n,:], color='black')
-                plt.plot(ST[n,:],-Z[n,:], color='red')
-                plt.plot(SVM[n,:],-Z[n,:], color='orange')
-                plt.plot(Phy[n,:],-Z[n,:], color='green')
+                plt.plot(SXX[n,:],-Z[n,:], color='blue', label='SigmaXX')
+                plt.plot(SZZ[n,:],-Z[n,:], color='lightblue', label='SigmaZZ')
+                plt.plot(SYY[n,:],-Z[n,:], color='black', label='SigmaYY')
+                plt.plot(ST[n,:],-Z[n,:], color='red', label='Contrainte de Tresca')
+                plt.plot(SVM[n,:],-Z[n,:], color='orange', label='Contrainte de Von Mises')
+                plt.plot(Phy[n,:],-Z[n,:], color='green', label='Pression hydrostatique')
+                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
                 plt.grid(True)
 
 
                 plt.xlabel('Contrainte/PHertz ')
                 plt.ylabel('z/a')
-                plt.title('Titre')
+                plt.title('Localisation des contraintes')
                 plt.axis([-1.2,0.8,-2,0])
 
 
@@ -287,9 +288,9 @@ def choix_fonction(géométrie, x):
                 print(" ")
                 print("   - Le","contact","demi-largeur","est","a","=",a*10**(3),"mm")
                 print("   - La","pression","de contact maximale","est","P","=",Ph*10**(-9),"GPa")
-                print("   - La","prondeur","du","maximum","de","contrainte","est","z","=",z_crit*10**(3),"mm")
+                print("   - La","prondeur","du","maximum","de","contrainte","est","z_crit","=",z_crit*10**(3),"mm")
                 print("   - La","contrainte","de","Tresca","maximale","est","Tau","=",Tau_max*10**(-6),"MPa")
-                print("   - La déformation élastique total est =",Delta*10**(-3), "mm")
+                print("   - La déformation élastique total est Delta =",Delta*10**(3), "mm")
                 print(" ")
                 print(" ")
                 print(" ")
@@ -411,18 +412,19 @@ def choix_fonction(géométrie, x):
                 x=X[n]  #(fonction qui en entrée x et renvoie n
 
 
-                plt.plot(SXX[n,:],-Z[n,:], color='blue')
-                plt.plot(SZZ[n,:],-Z[n,:], color='lightblue')
-                plt.plot(SYY[n,:],-Z[n,:], color='black')
-                plt.plot(ST[n,:],-Z[n,:], color='red')
-                plt.plot(SVM[n,:],-Z[n,:], color='orange')
-                plt.plot(Phy[n,:],-Z[n,:], color='green')
+                plt.plot(SXX[n,:],-Z[n,:], color='blue', label='SigmaXX')
+                plt.plot(SZZ[n,:],-Z[n,:], color='lightblue', label='SigmaZZ')
+                plt.plot(SYY[n,:],-Z[n,:], color='black', label='SigmaYY')
+                plt.plot(ST[n,:],-Z[n,:], color='red', label='Contrainte de Tresca')
+                plt.plot(SVM[n,:],-Z[n,:], color='orange', label='Contrainte de Von Mises')
+                plt.plot(Phy[n,:],-Z[n,:], color='green', label='Pression hydrostatique')
+                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
                 plt.grid(True)
 
 
                 plt.xlabel('Contrainte/PHertz ')
                 plt.ylabel('z/a')
-                plt.title('Titre')
+                plt.title('Localisation des contraintes')
                 plt.axis([-1.2,0.8,-2,0])
 
 
@@ -496,7 +498,7 @@ def choix_fonction(géométrie, x):
                 print(" ")
                 print("   - Le contact demi-largeur est a =",a,"mm")
                 print("   - La pression de contact maximale est P","=",Ph,"MPa")
-                print("   - La prondeur du maximum de contrainte est z =",z_crit,"mm")
+                print("   - La prondeur du maximum de contrainte est z_crit =",z_crit,"mm")
                 print("   - La contrainte de Tresca maximale est Tau =",Tau_max,"MPa")
                 print("   - La Déformation élastique e est Delta =",Delta,"mm")
                 print(" ")
@@ -599,35 +601,37 @@ def choix_fonction(géométrie, x):
 
 
                 #On trace les contraintes projetées sur y
-                plt.plot(Y,SXXy, color='blue')
-                plt.plot(Y,SYYy, color='pink')
-                plt.plot(Y,SZZy, color='yellow')
-                plt.plot(Y,SVMy, color='green')
+                plt.plot(Y,SXXy, color='blue', label="SigmaXX")
+                plt.plot(Y,SYYy, color='pink', label="SigmaYY")
+                plt.plot(Y,SZZy, color='yellow', label="SigmaZZ")
+                plt.plot(Y,SVMy, color='orange', label="Contrainte de Von Mises")
+                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
                 plt.grid(True)
 
                 plt.xlabel('y/a')
                 plt.ylabel('Contrainte/PHertz')
-                plt.title('Titre')
+                plt.title('Localisation des contraintes projeté selon y')
                 plt.axis([-1.2,1.2,-1,0.5])
 
                 plt.figure()
 
                 #On trace les contraintes projetées sur z
-                plt.plot(Z,SXXz, color='pink')
-                plt.plot(Z,SYYz, color='blue')
-                plt.plot(Z,SZZz, color='yellow')
-                plt.plot(Z,SVMz, color='orange')
-                plt.plot(Z,ST, color='red')
-                plt.plot(Z,Phy, color='green')
+                plt.plot(Z,SXXz, color='pink', label="SigmaXX")
+                plt.plot(Z,SYYz, color='blue', label="SigmaYY")
+                plt.plot(Z,SZZz, color='yellow', label="SigmaZZ")
+                plt.plot(Z,SVMz, color='orange', label="Contrainte de Von Mises")
+                plt.plot(Z,ST, color='red', label="Contrainte de Tresca")
+                plt.plot(Z,Phy, color='green', label="Pression hydrostatique")
+                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
                 plt.grid(True)
-                plt.annotate('les courbes ST et SVM sont confondues', xy=(Z[int(len(Z)/2)]/2,ST[int(len(Z)/2)]), xytext=(Z[int(len(Z)/2)],ST[int(len(Z)/2)]),
+                plt.annotate('les courbes ST et SVM sont confondues', xy=(Z[int(len(Z)/2)]/2-0.3,ST[int(len(Z)/2)]), xytext=(Z[int(len(Z)/2)]-0.3,ST[int(len(Z)/2)]),
                             )
-                plt.annotate('les courbes SXXz et SSYz sont confondues', xy=(Z[-1]/2,SXXz[-1]), xytext=(Z[-1]/2,SXXz[-1]),
+                plt.annotate('les courbes SXXz et SYYz sont confondues', xy=(Z[-1]/2-0.3,SXXz[-1]), xytext=(Z[-1]/2-0.3,SXXz[-1]),
                             )
 
                 plt.xlabel('z/a')
                 plt.ylabel('Contrainte/PHertz')
-                plt.title('Titre')
+                plt.title('Localisation des contraintes projeté selon z')
                 plt.axis([0,1.2,-1,0.75])
 
                 plt.figure()
@@ -719,7 +723,7 @@ def choix_fonction(géométrie, x):
                 print(" ")
                 print("   - Le contact demi-largeur est a =",a,"mm")
                 print("   - La pression de contact maximale est P","=",Ph,"MPa")
-                print("   - La prondeur du maximum de contrainte est z =",z_crit,"mm")
+                print("   - La prondeur du maximum de contrainte est z_crit =",z_crit,"mm")
                 print("   - La contrainte de Tresca maximale est Tau =",Tau_max,"MPa")
                 print("   - La Déformation élastique e est Delta =",Delta,"mm")
                 print(" ")
@@ -821,17 +825,39 @@ def choix_fonction(géométrie, x):
 
 
 
-                #On trace les contraintes projetées sur y
-                plt.plot(Y,SXXy, color='blue')
-                plt.plot(Y,SYYy, color='pink')
-                plt.plot(Y,SZZy, color='yellow')
-                plt.plot(Y,SVMy, color='green')
+                 #On trace les contraintes projetées sur y
+                plt.plot(Y,SXXy, color='blue', label="SigmaXX")
+                plt.plot(Y,SYYy, color='pink', label="SigmaYY")
+                plt.plot(Y,SZZy, color='yellow', label="SigmaZZ")
+                plt.plot(Y,SVMy, color='orange', label="Contrainte de Von Mises")
+                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
                 plt.grid(True)
 
                 plt.xlabel('y/a')
                 plt.ylabel('Contrainte/PHertz')
-                plt.title('Titre')
+                plt.title('Localisation des contraintes projeté selon y')
                 plt.axis([-1.2,1.2,-1,0.5])
+
+                plt.figure()
+
+                #On trace les contraintes projetées sur z
+                plt.plot(Z,SXXz, color='pink', label="SigmaXX")
+                plt.plot(Z,SYYz, color='blue', label="SigmaYY")
+                plt.plot(Z,SZZz, color='yellow', label="SigmaZZ")
+                plt.plot(Z,SVMz, color='orange', label="Contrainte de Von Mises")
+                plt.plot(Z,ST, color='red', label="Contrainte de Tresca")
+                plt.plot(Z,Phy, color='green', label="Pression hydrostatique")
+                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+                plt.grid(True)
+                plt.annotate('les courbes ST et SVM sont confondues', xy=(Z[int(len(Z)/2)]/2-0.3,ST[int(len(Z)/2)]), xytext=(Z[int(len(Z)/2)]-0.3,ST[int(len(Z)/2)]),
+                            )
+                plt.annotate('les courbes SXXz et SYYz sont confondues', xy=(Z[-1]/2-0.3,SXXz[-1]), xytext=(Z[-1]/2-0.3,SXXz[-1]),
+                            )
+
+                plt.xlabel('z/a')
+                plt.ylabel('Contrainte/PHertz')
+                plt.title('Localisation des contraintes projeté selon z')
+                plt.axis([0,1.2,-1,0.75])
 
                 plt.figure()
 
@@ -850,7 +876,7 @@ def choix_fonction(géométrie, x):
 
                 plt.xlabel('z/a')
                 plt.ylabel('Contrainte/PHertz')
-                plt.title('Titre')
+                plt.title('Localisation des contraintes projeté selon z')
                 plt.axis([0,1.2,-1,0.75])
 
                 plt.figure()
