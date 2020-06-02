@@ -861,25 +861,6 @@ def choix_fonction(géométrie, x):
 
                 plt.figure()
 
-                #On trace les contraintes projetées sur z
-                plt.plot(Z,SXXz, color='pink')
-                plt.plot(Z,SYYz, color='blue')
-                plt.plot(Z,SZZz, color='yellow')
-                plt.plot(Z,SVMz, color='orange')
-                plt.plot(Z,ST, color='red')
-                plt.plot(Z,Phy, color='green')
-                plt.grid(True)
-                plt.annotate('les courbes ST et SVM sont confondues', xy=(Z[int(len(Z)/2)]/2,ST[int(len(Z)/2)]), xytext=(Z[int(len(Z)/2)],ST[int(len(Z)/2)]),
-                            )
-                plt.annotate('les courbes SXXz et SSYz sont confondues', xy=(Z[-1]/2,SXXz[-1]), xytext=(Z[-1]/2,SXXz[-1]),
-                            )
-
-                plt.xlabel('z/a')
-                plt.ylabel('Contrainte/PHertz')
-                plt.title('Localisation des contraintes projeté selon z')
-                plt.axis([0,1.2,-1,0.75])
-
-                plt.figure()
 
 
                 plt.plot(Phy,ST, color='black')
